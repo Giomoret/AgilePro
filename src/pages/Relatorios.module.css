@@ -1,0 +1,342 @@
+.page {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #1a1a18;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #888780;
+  margin-top: 4px;
+}
+
+.exportBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: #1a1a18;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.exportBtn:hover {
+  background: #2c2c2a;
+}
+
+/* Grid de Cards - Organização em colunas */
+.reportGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 24px;
+}
+
+.projectCard {
+  background: #fff;
+  border-radius: 20px;
+  padding: 1.8rem;
+  border: 1px solid #f0f0ee;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-left: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.projectName {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2c2c2a;
+  margin: 0;
+}
+
+.badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 6px;
+  font-weight: 700;
+  display: inline-block;
+  margin-top: 6px;
+}
+
+.mainScore {
+  text-align: right;
+}
+
+.scoreValue {
+  display: block;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.scoreLabel {
+  font-size: 10px;
+  color: #888780;
+  font-weight: 700;
+}
+
+/* Linha de estatísticas com colunas alinhadas */
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: #f9f9f8;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 1.8rem;
+  text-align: center;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.statVal {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.statLab {
+  font-size: 9px;
+  color: #888780;
+  font-weight: 700;
+}
+
+/* Rodapé com Progresso */
+.progressFooter {
+  margin-top: auto;
+}
+
+.progressInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+.progressBar {
+  height: 8px;
+  background: #f0f0ee;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.8s ease;
+}
+
+/* Estilo Premium para o Botão da Seta Azul */
+.detailsBtn {
+  background: #f0f7ff;
+  border: none;
+  color: #378ADD;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.detailsBtn:hover {
+  background: #378ADD;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(55, 138, 221, 0.3);
+}
+
+/* Modal Estilos com Animação */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(26, 26, 24, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modalContent {
+  background: #fff;
+  width: 90%;
+  max-width: 650px;
+  border-radius: 24px;
+  padding: 2.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.closeBtn {
+  background: #f5f5f5;
+  border: none;
+  border-radius: 12px;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  transition: all 0.2s;
+  color: #666;
+}
+
+.closeBtn:hover {
+  background: #eeeeed;
+  color: #1a1a18;
+  transform: rotate(90deg);
+}
+
+.modalBody {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 24px;
+}
+
+.modalChartCard {
+  background: #ffffff;
+  padding: 1.5rem;
+  border-radius: 20px;
+  border: 1px solid #f0f0ee;
+}
+
+.modalChartCard h3 {
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+  color: #888780;
+  text-transform: uppercase;
+}
+
+/* Gráfico de Barras no Modal */
+.miniChart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  height: 120px;
+  padding-bottom: 10px;
+}
+
+.chartBarGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.barTrack {
+  width: 16px;
+  height: 80px;
+  background: #f0f0ee;
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.barFill {
+  width: 100%;
+  border-radius: 8px;
+  transition: height 0.8s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+}
+
+.barLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: #b4b2a9;
+  margin-top: 4px;
+}
+
+/* Legenda Lateral do Modal */
+.donutInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #2c2c2a;
+  padding: 8px 12px;
+  background: #f9f9f8;
+  border-radius: 10px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

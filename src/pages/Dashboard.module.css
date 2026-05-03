@@ -1,0 +1,236 @@
+/* Dashboard.module.css - Versão com Badges Coloridas */
+.page {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  background-color: #fcfcfc;
+}
+
+.header {
+  border-left: 4px solid #378ADD;
+  padding-left: 16px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a18;
+  margin: 0;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.statCard {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f0f0ee;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Faixas coloridas no topo */
+.statCard:nth-child(1) {
+  border-top: 4px solid #378ADD;
+}
+
+.statCard:nth-child(2) {
+  border-top: 4px solid #7F77DD;
+}
+
+.statCard:nth-child(3) {
+  border-top: 4px solid #1D9E75;
+}
+
+.statCard:nth-child(4) {
+  border-top: 4px solid #EF9F27;
+}
+
+.valueContainer {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.statValue {
+  font-size: 36px;
+  font-weight: 800;
+  color: #2c2c2a;
+  line-height: 1;
+  margin: 0;
+}
+
+.kpiDelta {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.up {
+  background: #EAF3DE;
+  color: #3B6D11;
+}
+
+.down {
+  background: #FCEBEB;
+  color: #A32D2D;
+}
+
+.statLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #888780;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Grid de Gráficos e Cards ────────────────────────────── */
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  /* Quadro de progresso maior */
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f0f0ee;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2c2c2a;
+  margin: 0 0 24px;
+}
+
+/* ── Barras de Progresso dos Projetos ───────────────────── */
+.progressSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.barraRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.barraInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.barraLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+}
+
+.barraTrack {
+  width: 100%;
+  height: 10px;
+  background: #f0f0ee;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.barraFill {
+  height: 100%;
+  border-radius: 20px;
+  transition: width 1s ease-out;
+}
+
+.barraPct {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ── Gráfico Donut e Legenda ────────────────────────────── */
+.donutWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.donutLegend {
+  width: 100%;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #f9f9f8;
+  border-radius: 12px;
+  transition: background 0.2s;
+}
+
+.legendLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.legendLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: #5f5e5a;
+}
+
+.legendVal {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2c2c2a;
+}
+
+/* ── Estado Vazio ───────────────────────────────────────── */
+.emptyText {
+  color: #b4b2a9;
+  font-size: 14px;
+  text-align: center;
+  padding: 40px 0;
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 900px) {
+  .chartsGrid {
+    grid-template-columns: 1fr;
+  }
+}

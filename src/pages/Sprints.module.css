@@ -1,0 +1,483 @@
+/* Sprints.module.css */
+.page {
+  padding: 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* ── Seletores de Projeto e Sprints ────────────────────── */
+.topControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.projectSelector {
+  display: flex;
+  align-items: center;
+}
+
+.selectProject {
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #2c2c2a;
+  outline: none;
+  background: #ffffff;
+  min-width: 200px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.selectProject:focus {
+  border-color: #378ADD;
+}
+
+.sprintTabs {
+  display: flex;
+  gap: 8px;
+}
+
+.sprintTab {
+  padding: 8px 16px;
+  border: none;
+  background: #f5f5f3;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #888780;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sprintTab:hover {
+  background: #e8e8e5;
+  color: #2c2c2a;
+}
+
+.sprintTabActive {
+  background: #2c2c2a;
+  color: #ffffff;
+}
+
+/* ── Empty State ───────────────────────────────────────── */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 50vh;
+  text-align: center;
+  color: #b4b2a9;
+}
+
+.emptyState h2 {
+  color: #2c2c2a;
+  margin: 16px 0 8px;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.emptyState p {
+  font-size: 14px;
+}
+
+/* ── Cabeçalho do Kanban ───────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.titulo {
+  font-size: 20px;
+  font-weight: 500;
+  color: #2c2c2a;
+  margin: 0;
+}
+
+.subtitulo {
+  font-size: 13px;
+  color: #888780;
+}
+
+/* ── Botão Adicionar ───────────────────────────────────── */
+.addBtn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: #378ADD;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.addBtn:hover {
+  background: #2b70b5;
+}
+
+/* ── board ─────────────────────────────────────────────── */
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+/* ── coluna ────────────────────────────────────────────── */
+.coluna {
+  background: #f5f5f3;
+  border-radius: 12px;
+  padding: 12px;
+  min-height: 200px;
+}
+
+.colunaHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 0 2px;
+}
+
+.colunaIndicador {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.colunaTitulo {
+  font-size: 13px;
+  font-weight: 500;
+  color: #2c2c2a;
+  margin: 0;
+  flex: 1;
+}
+
+.colunaContador {
+  font-size: 12px;
+  color: #888780;
+  background: #e8e8e5;
+  border-radius: 99px;
+  padding: 1px 8px;
+}
+
+.colunaBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 60px;
+}
+
+/* ── card de tarefa ────────────────────────────────────── */
+.tarefaCard {
+  background: #ffffff;
+  border: 0.5px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  cursor: grab;
+  user-select: none;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tarefaCard:hover {
+  border-color: rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.tarefaCard:active {
+  cursor: grabbing;
+}
+
+.tarefaTitulo {
+  font-size: 13px;
+  color: #2c2c2a;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.tarefaData {
+  font-size: 11px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tarefaRodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 99px;
+  text-transform: capitalize;
+}
+
+.avatarsGroup {
+  display: flex;
+  align-items: center;
+}
+
+.avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 500;
+  border: 2px solid #ffffff;
+  margin-left: -6px;
+}
+
+.avatar:first-child {
+  margin-left: 0;
+}
+
+/* ── fantasma (DragOverlay) ────────────────────────────── */
+.fantasma {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-color: rgba(0, 0, 0, 0.15) !important;
+  cursor: grabbing;
+  transform: rotate(1.5deg);
+}
+
+/* ── coluna vazia ──────────────────────────────────────── */
+.vazio {
+  font-size: 12px;
+  color: #b4b2a9;
+  text-align: center;
+  padding: 20px 0;
+  border: 1px dashed #d3d1c7;
+  border-radius: 8px;
+}
+
+/* ── modal de edição ───────────────────────────────────── */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalTitulo {
+  margin: 0 0 20px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c2c2a;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formRow {
+  display: flex;
+  gap: 16px;
+}
+
+.formRow>.formGroup {
+  flex: 1;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formGroup label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+}
+
+.formGroup input,
+.formGroup select {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #2c2c2a;
+  outline: none;
+  transition: border-color 0.2s;
+  background: #fff;
+}
+
+.textarea {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #2c2c2a;
+  outline: none;
+  transition: border-color 0.2s;
+  background: #fff;
+  min-height: 80px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.textarea:focus {
+  border-color: #378ADD;
+}
+
+.assigneesContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.assigneeToggle {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fcfcfc;
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.assigneeToggle:hover {
+  background: #f0f0f0;
+}
+
+.assigneeToggle.active {
+  background: #ebf3fa;
+  border-color: #378ADD;
+  color: #185FA5;
+}
+
+/* ── Ações do Modal ────────────────────────────────────── */
+.modalActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.actionGroup {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.btnDeletar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  background: #fee2e2;
+  color: #dc2626;
+  transition: background-color 0.2s;
+}
+
+.btnDeletar:hover {
+  background: #fecaca;
+}
+
+.btnCancelar,
+.btnSalvar {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btnCancelar {
+  background: #f5f5f3;
+  color: #555;
+}
+
+.btnCancelar:hover {
+  background: #e8e8e5;
+}
+
+.btnSalvar {
+  background: #378ADD;
+  color: #ffffff;
+}
+
+.btnSalvar:hover {
+  background: #2b70b5;
+}
+
+/* ── responsivo ────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .board {
+    grid-template-columns: 1fr;
+  }
+
+  .formRow {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .topControls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sprintTabs {
+    justify-content: space-between;
+  }
+}
