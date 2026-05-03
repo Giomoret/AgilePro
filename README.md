@@ -1,64 +1,62 @@
-# AgilePro
+# AgilePro - Sistema de Gestão Ágil
 
-Plataforma de gerenciamento de projetos ágeis com Dashboard, Projetos, Sprints (Kanban) e Relatórios.
+O **AgilePro** é uma plataforma completa de gerenciamento de projetos baseada na metodologia Scrum. O sistema permite que equipes organizem seus fluxos de trabalho através de quadros Kanban, gestão de sprints e um controle rigoroso de permissões de usuários, com foco em uma experiência de usuário fluida e moderna.
 
-## Tecnologias
+## 🚀 Funcionalidades Principais
 
-- React 18
-- React Router DOM v6
-- Recharts (gráficos)
-- Lucide React (ícones)
-- CSS Modules
-- Vite
+*   **Autenticação e Segurança**: Sistema de login estrito validado contra base de dados dinâmica, garantindo que apenas usuários cadastrados acessem o sistema.
+*   **Módulo de Registro**: Interface intuitiva para cadastro de novos usuários (Nome, Usuário e Senha), alimentando a lista de membros em tempo real.
+*   **Quadro Kanban Interativo**: Gestão visual de tarefas com suporte total a *Drag and Drop* (Arrastar e Soltar) entre as colunas de status.
+*   **Controle de Acesso (RBAC)**: Diferenciação funcional baseada em cargos; administradores (**Scrum Master/PO**) possuem permissões de edição e exclusão, enquanto membros (**Developers**) possuem acesso restrito.
+*   **Gestão de Projetos e Sprints**: CRUD completo para organização de projetos e atribuição de tarefas a múltiplos responsáveis da equipe.
+*   **Persistência de Dados**: Utilização de `localStorage` para garantir que as informações permaneçam salvas mesmo após o fechamento do navegador.
 
-## Como rodar
+## 🛠️ Tecnologias Utilizadas
 
-```bash
-# Instalar dependências
-npm install
+*   **Front-End**: React.js com Vite para um ambiente de desenvolvimento rápido e otimizado.
+*   **Ícones**: Lucide React para uma interface visual limpa e profissional.
+*   **Estado Global**: React Context API para gerenciamento centralizado de dados da aplicação.
+*   **Navegação**: React Router para controle de rotas públicas e rotas protegidas por autenticação.
+*   **Arrastar e Soltar**: Biblioteca `@dnd-kit` para a implementação da mecânica do Kanban.
 
-# Iniciar em desenvolvimento
-npm run dev
+## ⚙️ Como Executar o Projeto
 
-# Build para produção
-npm run build
-```
+Siga os passos abaixo para rodar o ambiente de desenvolvimento localmente:
 
-## Estrutura do projeto
+1.  **Clone o repositório:**
+    ```bash
+    git clone https://github.com/seu-usuario/agilepro.git
+    ```
 
-```
+2.  **Instale as dependências base:**
+    ```bash
+    npm install
+    ```
+
+3.  **Instale as bibliotecas de interface e funcionalidade:**
+    *(Necessário para garantir o funcionamento dos ícones e do sistema de arraste)*
+    ```bash
+    npm install lucide-react @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
+    ```
+
+4.  **Inicie o servidor de desenvolvimento:**
+    ```bash
+    npm run dev
+    ```
+
+## 📁 Estrutura do Projeto
+```text
 src/
-├── components/       # Componentes reutilizáveis
-│   ├── Layout.jsx    # Sidebar + Outlet
-│   ├── Modal.jsx     # Modal genérico
-│   ├── Badge.jsx     # Badges de status/tipo
-│   ├── KpiCard.jsx   # Cards de métricas
-│   └── ProgressBar.jsx
-├── context/
-│   └── AppContext.jsx # Estado global (projetos, sprints, tarefas)
-├── data/
-│   └── mockData.js   # Dados iniciais mockados
-├── pages/
-│   ├── Dashboard.jsx
-│   ├── Projetos.jsx
-│   ├── Sprints.jsx   # Kanban board
-│   └── Relatorios.jsx
-├── App.jsx           # Rotas
-├── main.jsx          # Entry point
-└── index.css         # Variáveis CSS globais
+├── components/     # Componentes reutilizáveis (Layout, Modal, Navbar)
+├── context/        # AppContext (Lógica de autenticação e estado global)
+├── pages/          # Páginas (Dashboard, Projetos, Sprints, Login, Register)
+├── data/           # MockData inicial para popular o sistema
+└── styles/         # Arquivos de estilização via CSS Modules
 ```
 
-## Funcionalidades
+---
 
-- **Dashboard**: KPIs ao vivo, sprints ativas com progresso, feed de atividades, resumo de projetos
-- **Projetos**: Listagem em grid, busca em tempo real, criação de novos projetos via modal
-- **Sprints**: Board Kanban com 4 colunas, filtro por projeto, avançar tarefas entre colunas, criar nova tarefa e nova sprint
-- **Relatórios**: Gráficos de progresso por projeto (barra), distribuição de tarefas (pizza/donut), velocidade das sprints (linha), performance da equipe (barra horizontal)
-
-## Próximos passos sugeridos
-
-- Integrar backend Node.js/Express com JWT
-- Banco de dados (PostgreSQL ou MongoDB)
-- Drag and drop no Kanban (react-beautiful-dnd)
-- Autenticação de usuários
-- Notificações em tempo real (WebSocket)
+### 👨‍💻 Desenvolvedor
+**Giovanni Alvarenga Moretto**  
+*Estudante de Análise e Desenvolvimento de Sistemas - Fatec São José dos Campos*
+```
