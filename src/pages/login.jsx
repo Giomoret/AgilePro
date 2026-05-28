@@ -1,36 +1,54 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, User, AlertCircle, UserPlus } from 'lucide-react';
+import { Lock, Mail, AlertCircle, UserPlus, Loader } from 'lucide-react';
+
+const API_URL = 'http://localhost:3001';
 
 export default function Login() {
-    const [user, setUser] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    // Importamos allUsers e login do contexto atualizado
-    const { allUsers, login } = useApp();
+    const { login } = useApp();
     const navigate = useNavigate();
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
+        setLoading(true);
 
-        // Validação estrita: busca o usuário exato na lista global
-        const foundUser = allUsers.find(
-            (u) => u.user === user && u.pass === password
-        );
+        try {
+            const response = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, senha: password }),
+            });
 
-        if (foundUser) {
-            // Simulação de Token JWT para a sessão
-            const mockJWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+            const data = await response.json();
 
-            // Realiza o login com os dados reais encontrados
-            login(foundUser, mockJWT);
+            if (!response.ok) {
+                setError(data.erro || 'Credenciais inválidas.');
+                return;
+            }
+
+            // Mapeia os dados do backend para o formato do contexto
+            const userData = {
+                id: data.usuario.id,
+                nome: data.usuario.nome,
+                email: data.usuario.email,
+                role: data.usuario.cargo === 'admin' ? 'Scrum Master' : 'Dev',
+                user: data.usuario.email,
+            };
+
+            login(userData, data.token);
             navigate('/dashboard');
-        } else {
-            // Barra qualquer tentativa que não esteja na lista allUsers
-            setError('Usuário não cadastrado ou senha incorreta.');
+
+        } catch (err) {
+            setError('Erro ao conectar com o servidor. Verifique se o backend está rodando.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -61,49 +79,59 @@ export default function Login() {
                 )}
 
                 <div style={{ marginBottom: '1.2rem' }}>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: '#444' }}>Usuário</label>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: '#444' }}>
+                        Email
+                    </label>
                     <div style={{ position: 'relative' }}>
-                        <User size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#b4b2a9' }} />
+                        <Mail size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#b4b2a9' }} />
                         <input
-                            type="text"
-                            placeholder="admin, po ou seu usuário"
-                            style={{ width: '100%', padding: '12px 12px 12px 40px', border: '1px solid #e0e0de', borderRadius: '10px', outline: 'none', transition: 'border-color 0.2s' }}
-                            value={user} onChange={e => setUser(e.target.value)} required
+                            type="email"
+                            placeholder="seu@email.com"
+                            style={{ width: '100%', padding: '12px 12px 12px 40px', border: '1px solid #e0e0de', borderRadius: '10px', outline: 'none', boxSizing: 'border-box' }}
+                            value={email}
+                            onChange={e => setEmail(e.target.value)}
+                            required
                         />
                     </div>
                 </div>
 
                 <div style={{ marginBottom: '2rem' }}>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: '#444' }}>Senha</label>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: '#444' }}>
+                        Senha
+                    </label>
                     <div style={{ position: 'relative' }}>
                         <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#b4b2a9' }} />
                         <input
                             type="password"
                             placeholder="Sua senha"
-                            style={{ width: '100%', padding: '12px 12px 12px 40px', border: '1px solid #e0e0de', borderRadius: '10px', outline: 'none' }}
-                            value={password} onChange={e => setPassword(e.target.value)} required
+                            style={{ width: '100%', padding: '12px 12px 12px 40px', border: '1px solid #e0e0de', borderRadius: '10px', outline: 'none', boxSizing: 'border-box' }}
+                            value={password}
+                            onChange={e => setPassword(e.target.value)}
+                            required
                         />
                     </div>
                 </div>
 
-                <button type="submit" style={{
-                    width: '100%', padding: '14px', background: '#1a1a18', color: 'white',
-                    border: 'none', borderRadius: '10px', fontWeight: '700', cursor: 'pointer',
-                    transition: 'all 0.2s', marginBottom: '1rem'
-                }}>
-                    Entrar no Sistema
+                <button
+                    type="submit"
+                    disabled={loading}
+                    style={{
+                        width: '100%', padding: '14px',
+                        background: loading ? '#555' : '#1a1a18',
+                        color: 'white', border: 'none', borderRadius: '10px',
+                        fontWeight: '700', cursor: loading ? 'not-allowed' : 'pointer',
+                        transition: 'all 0.2s', marginBottom: '1rem',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                    }}
+                >
+                    {loading ? <><Loader size={18} /> Entrando...</> : 'Entrar no Sistema'}
                 </button>
 
                 <div style={{ textAlign: 'center', fontSize: '14px', color: '#555' }}>
                     Ainda não tem conta? <br />
                     <Link to="/register" style={{
-                        color: '#378ADD',
-                        textDecoration: 'none',
-                        fontWeight: '600',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        marginTop: '8px'
+                        color: '#378ADD', textDecoration: 'none', fontWeight: '600',
+                        display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '8px'
                     }}>
                         <UserPlus size={16} /> Cadastre-se agora
                     </Link>
