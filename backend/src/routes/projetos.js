@@ -3,14 +3,13 @@ const router = express.Router();
 const db = require("../db");
 const { autenticar } = require("../middlewares/auth");
 
-// GET /projetos — Lista todos os projetos com seus membros
+// GET /projetos
 router.get("/", autenticar, async (req, res) => {
   try {
     const [projetos] = await db.query(
       "SELECT * FROM projetos ORDER BY criado_em DESC"
     );
 
-    // Para cada projeto, busca os membros
     for (const projeto of projetos) {
       const [membros] = await db.query(
         `SELECT u.id, u.nome, u.email, u.cargo
@@ -20,6 +19,10 @@ router.get("/", autenticar, async (req, res) => {
         [projeto.id]
       );
       projeto.membros = membros;
+      // Converte string de etiquetas para array
+      projeto.etiquetas = projeto.etiquetas
+        ? projeto.etiquetas.split(',').filter(Boolean)
+        : [];
     }
 
     res.json(projetos);
@@ -29,7 +32,7 @@ router.get("/", autenticar, async (req, res) => {
   }
 });
 
-// GET /projetos/:id — Busca projeto por ID
+// GET /projetos/:id
 router.get("/:id", autenticar, async (req, res) => {
   const { id } = req.params;
   try {
@@ -45,6 +48,9 @@ router.get("/:id", autenticar, async (req, res) => {
       [id]
     );
     projeto.membros = membros;
+    projeto.etiquetas = projeto.etiquetas
+      ? projeto.etiquetas.split(',').filter(Boolean)
+      : [];
 
     res.json(projeto);
   } catch (err) {
@@ -53,21 +59,22 @@ router.get("/:id", autenticar, async (req, res) => {
   }
 });
 
-// POST /projetos — Cria novo projeto
+// POST /projetos
 router.post("/", autenticar, async (req, res) => {
-  const { nome, descricao, status, cor, membros } = req.body;
+  const { nome, descricao, status, cor, membros, etiquetas } = req.body;
 
   if (!nome) return res.status(400).json({ erro: "Nome é obrigatório." });
 
   try {
+    const etiquetasStr = Array.isArray(etiquetas) ? etiquetas.join(',') : '';
+
     const [result] = await db.query(
-      "INSERT INTO projetos (nome, descricao, status, cor) VALUES (?, ?, ?, ?)",
-      [nome, descricao || "", status || "Ativo", cor || "#378ADD"]
+      "INSERT INTO projetos (nome, descricao, status, cor, etiquetas) VALUES (?, ?, ?, ?, ?)",
+      [nome, descricao || "", status || "Ativo", cor || "#378ADD", etiquetasStr]
     );
 
     const projetoId = result.insertId;
 
-    // Insere membros se fornecidos
     if (Array.isArray(membros) && membros.length > 0) {
       const valores = membros.map((uid) => [projetoId, uid]);
       await db.query("INSERT INTO projeto_membros (projeto_id, usuario_id) VALUES ?", [valores]);
@@ -80,10 +87,10 @@ router.post("/", autenticar, async (req, res) => {
   }
 });
 
-// PUT /projetos/:id — Atualiza projeto
+// PUT /projetos/:id
 router.put("/:id", autenticar, async (req, res) => {
   const { id } = req.params;
-  const { nome, descricao, status, cor, membros } = req.body;
+  const { nome, descricao, status, cor, membros, etiquetas } = req.body;
 
   try {
     const [existe] = await db.query("SELECT id FROM projetos WHERE id = ?", [id]);
@@ -96,13 +103,16 @@ router.put("/:id", autenticar, async (req, res) => {
     if (descricao !== undefined) { campos.push("descricao = ?"); valores.push(descricao); }
     if (status) { campos.push("status = ?"); valores.push(status); }
     if (cor) { campos.push("cor = ?"); valores.push(cor); }
+    if (etiquetas !== undefined) {
+      campos.push("etiquetas = ?");
+      valores.push(Array.isArray(etiquetas) ? etiquetas.join(',') : '');
+    }
 
     if (campos.length > 0) {
       valores.push(id);
       await db.query(`UPDATE projetos SET ${campos.join(", ")} WHERE id = ?`, valores);
     }
 
-    // Atualiza membros: remove todos e reinsere
     if (Array.isArray(membros)) {
       await db.query("DELETE FROM projeto_membros WHERE projeto_id = ?", [id]);
       if (membros.length > 0) {
@@ -118,7 +128,7 @@ router.put("/:id", autenticar, async (req, res) => {
   }
 });
 
-// DELETE /projetos/:id — Remove projeto
+// DELETE /projetos/:id
 router.delete("/:id", autenticar, async (req, res) => {
   const { id } = req.params;
   try {

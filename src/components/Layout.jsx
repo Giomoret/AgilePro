@@ -1,15 +1,12 @@
 import React from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import {
-  LayoutDashboard,
-  FolderKanban,
-  Zap,
-  BarChart2,
-  UserCircle,
-  LogOut // Importação do ícone de sair
+  LayoutDashboard, FolderKanban, Zap, BarChart2, UserCircle, LogOut
 } from 'lucide-react'
-import { useApp } from '../context/AppContext' // Importação do hook para acessar o estado
+import { useApp } from '../context/AppContext'
 import styles from './Layout.module.css'
+
+const API_URL = 'http://localhost:3001'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
@@ -20,13 +17,17 @@ const NAV_ITEMS = [
 ]
 
 export default function Layout() {
-  const { userLogged, isAdmin, logout } = useApp()
+  const { userLogged, isAdmin, logout, allUsers } = useApp()
 
-  // Filtra o menu: se não for admin (Scrum Master ou PO), a aba Perfis não aparece
   const filteredNav = NAV_ITEMS.filter(item => {
     if (item.to === '/perfis') return isAdmin
     return true
   })
+
+  // Busca o avatar atualizado do usuário logado na lista allUsers
+  const usuarioAtual = allUsers.find(u => String(u.id) === String(userLogged?.id))
+  const avatarUrl = usuarioAtual?.avatar ? `${API_URL}${usuarioAtual.avatar}` : null
+  const iniciais = userLogged?.nome?.substring(0, 2).toUpperCase() || '??'
 
   return (
     <div className={styles.shell}>
@@ -51,16 +52,20 @@ export default function Layout() {
           ))}
         </nav>
 
-        {/* ÁREA DO USUÁRIO ATUALIZADA */}
         <div className={styles.user}>
           <div
             className={styles.avatar}
             style={{
-              background: isAdmin ? '#534AB7' : '#1D9E75', // Diferenciação visual simples por cargo
-              color: 'white'
+              background: avatarUrl ? 'transparent' : (isAdmin ? '#534AB7' : '#1D9E75'),
+              color: 'white',
+              overflow: 'hidden',
+              padding: 0,
             }}
           >
-            {userLogged?.id || '??'}
+            {avatarUrl
+              ? <img src={avatarUrl} alt={userLogged?.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : iniciais
+            }
           </div>
 
           <div className={styles.userInfo}>
@@ -68,23 +73,16 @@ export default function Layout() {
             <span className={styles.userRole}>{userLogged?.role || 'Membro'}</span>
           </div>
 
-          {/* BOTÃO DE LOGOUT */}
           <button
             onClick={logout}
             title="Sair do sistema"
             style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '5px',
-              marginLeft: 'auto',
-              color: '#888780',
-              display: 'flex',
-              alignItems: 'center',
-              transition: 'color 0.2s'
+              background: 'none', border: 'none', cursor: 'pointer',
+              padding: '5px', marginLeft: 'auto', color: '#888780',
+              display: 'flex', alignItems: 'center', transition: 'color 0.2s'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.color = '#dc2626'}
-            onMouseLeave={(e) => e.currentTarget.style.color = '#888780'}
+            onMouseEnter={e => e.currentTarget.style.color = '#dc2626'}
+            onMouseLeave={e => e.currentTarget.style.color = '#888780'}
           >
             <LogOut size={18} />
           </button>

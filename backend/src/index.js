@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 require("dotenv").config();
 
 const app = express();
@@ -11,6 +12,9 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
 app.use(express.json());
+
+// Servir arquivos estáticos (avatars)
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // ─── Rotas ────────────────────────────────────
 app.use("/auth", require("./routes/auth"));

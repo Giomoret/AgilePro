@@ -3,7 +3,6 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 const API_URL = 'http://localhost:3001'
 const AppContext = createContext(null)
 
-// Helper para fazer chamadas autenticadas
 async function apiFetch(path, token, options = {}) {
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
@@ -56,10 +55,9 @@ export function AppProvider({ children }) {
     if (!token) return
     try {
       const data = await apiFetch('/usuarios', token)
-      // Mapeia para o formato que o frontend usa
       const mapped = data.map(u => ({
         ...u,
-        role: u.cargo === 'admin' ? 'Scrum Master' : 'Dev',
+        role: u.cargo_display || (u.cargo === 'admin' ? 'Administrador' : 'Dev / Membro'),
         user: u.email,
         cor: { fundo: '#CEDBF6', texto: '#185FA5' },
       }))
@@ -113,6 +111,7 @@ export function AppProvider({ children }) {
         color: p.cor,
         createdAt: new Date(p.criado_em).toLocaleDateString('pt-BR'),
         members: p.membros?.map(m => m.id.toString()) || [],
+        etiquetas: p.etiquetas || [],
       }))
       setProjects(mapped)
     } catch (err) {
@@ -133,6 +132,7 @@ export function AppProvider({ children }) {
         status: project.status || 'Ativo',
         cor: project.color || '#378ADD',
         membros: project.members || [],
+        etiquetas: project.etiquetas || [],
       }),
     })
     await fetchProjects()
@@ -147,6 +147,7 @@ export function AppProvider({ children }) {
         status: project.status,
         cor: project.color,
         membros: project.members || [],
+        etiquetas: project.etiquetas || [],
       }),
     })
     await fetchProjects()
@@ -182,6 +183,8 @@ export function AppProvider({ children }) {
             prioridade: t.prioridade,
             data: t.data_limite,
             responsaveis: t.responsaveis?.map(r => r.id.toString()) || [],
+            subtarefas: Array.isArray(t.subtarefas) ? t.subtarefas : [],
+            comentarios: Array.isArray(t.comentarios) ? t.comentarios : [],
           })
         }
       })
@@ -207,6 +210,8 @@ export function AppProvider({ children }) {
         sprint,
         projeto_id: projetoId,
         responsaveis: tarefa.responsaveis?.map(Number) || [],
+        subtarefas: tarefa.subtarefas || [],
+        comentarios: tarefa.comentarios || [],
       }),
     })
     await fetchTarefas(projetoId, sprint)
@@ -223,6 +228,8 @@ export function AppProvider({ children }) {
         data_limite: tarefa.data || null,
         sprint,
         responsaveis: tarefa.responsaveis?.map(Number) || [],
+        subtarefas: tarefa.subtarefas || [],
+        comentarios: tarefa.comentarios || [],
       }),
     })
     await fetchTarefas(projetoId, sprint)
@@ -233,19 +240,29 @@ export function AppProvider({ children }) {
     await fetchTarefas(projetoId, sprint)
   }
 
-  // Mantém compatibilidade com Sprints.jsx que usa setBoardsData direto (drag and drop)
+  // ─── Mover tarefas entre sprints (US-14) ──────
+  const moverTarefasParaSprint = async (projetoId, sprintOrigem, sprintDestino, tarefas) => {
+    for (const t of tarefas) {
+      await apiFetch(`/tarefas/${t.id}`, token, {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'a-fazer', sprint: sprintDestino }),
+      }).catch(e => console.error('Erro ao mover tarefa:', e))
+    }
+    await fetchTarefas(projetoId, sprintOrigem)
+    await fetchTarefas(projetoId, sprintDestino)
+  }
+
   const syncBoardWithApi = async (projetoId, sprint, board) => {
-    // Sincroniza status de todas as tarefas após drag-and-drop
     const tarefas = []
     Object.entries(board).forEach(([colId, col]) => {
       col.tarefas.forEach(t => tarefas.push({ ...t, status: colId }))
     })
     for (const t of tarefas) {
-      if (t.id && !t.id.startsWith('t-')) {
+      if (t.id && !t.id.startsWith('new-')) {
         await apiFetch(`/tarefas/${t.id}`, token, {
           method: 'PUT',
           body: JSON.stringify({ status: t.status }),
-        }).catch(() => {})
+        }).catch(() => { })
       }
     }
   }
@@ -262,7 +279,8 @@ export function AppProvider({ children }) {
       projects, addProject, updateProject, deleteProject, fetchProjects,
 
       // Tarefas / Kanban
-      boardsData, setBoardsData, fetchTarefas, addTarefa, updateTarefa, deleteTarefa, syncBoardWithApi,
+      boardsData, setBoardsData, fetchTarefas, addTarefa, updateTarefa,
+      deleteTarefa, syncBoardWithApi, moverTarefasParaSprint,
 
       // Compatibilidade legada
       sprints: [], tasks: [],

@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useApp } from "../context/AppContext";
 import { CheckCircle2, Target, Briefcase, ListChecks, TrendingUp } from "lucide-react";
 import styles from "./Dashboard.module.css";
 
-// ── COMPONENTE DE KPI COM SUPORTE A ÍCONE NAS BADGES ────────────────
-function KpiCard({ label, target, sufixo = "", delta, tipo, clean = false, icon: Icon }) {
+const API_URL = "http://localhost:3001";
+
+function KpiCard({ label, target, sufixo = "", delta, tipo, icon: Icon }) {
   const [valor, setValor] = useState(0);
 
   useEffect(() => {
@@ -28,10 +29,7 @@ function KpiCard({ label, target, sufixo = "", delta, tipo, clean = false, icon:
       <p className={styles.statLabel}>{label}</p>
       <div className={styles.valueContainer}>
         <p className={styles.statValue}>{valor}{sufixo}</p>
-        <div className={clean
-          ? `${styles.kpiDeltaText} ${tipo === "up" ? styles.upText : styles.downText}`
-          : `${styles.kpiDelta} ${tipo === "up" ? styles.up : styles.down}`
-        }>
+        <div className={`${styles.kpiDelta} ${tipo === "up" ? styles.up : styles.down}`}>
           {Icon && <Icon size={12} style={{ marginRight: '4px' }} />}
           {delta}
         </div>
@@ -40,7 +38,6 @@ function KpiCard({ label, target, sufixo = "", delta, tipo, clean = false, icon:
   );
 }
 
-// ── COMPONENTES AUXILIARES (DONUT E BARRA) ─────────────────────────
 function DonutChart({ data }) {
   const canvasRef = useRef(null);
   const total = data.reduce((s, d) => s + d.val, 0);
@@ -108,57 +105,75 @@ function BarraProgresso({ nome, pct, cor }) {
   );
 }
 
-// ── PÁGINA PRINCIPAL DO DASHBOARD ──────────────────────────────────
 export default function Dashboard() {
-  const { projects, boardsData } = useApp();
-
-  // Processamento de dados (Peso 0.25 para "Em progresso")
-  const stats = projects.map(proj => {
-    let progressoPonderado = 0;
-    let totalTarefas = 0;
-    const projectSprints = boardsData[proj.id] || {};
-
-    Object.values(projectSprints).forEach(board => {
-      const c = board["concluido"]?.tarefas.length || 0;
-      const p = board["em-progresso"]?.tarefas.length || 0;
-      const f = board["a-fazer"]?.tarefas.length || 0;
-      progressoPonderado += c + (p * 0.25);
-      totalTarefas += (c + p + f);
-    });
-
-    const pctFinal = totalTarefas === 0 ? 0 : Math.round((progressoPonderado / totalTarefas) * 100);
-
-    return {
-      id: proj.id,
-      nome: proj.name,
-      cor: proj.color || "#378ADD",
-      pct: pctFinal,
-      total: totalTarefas,
-      progressoPonderado
-    };
+  const { projects, token } = useApp();
+  const [tarefasStats, setTarefasStats] = useState({
+    total: 0,
+    concluido: 0,
+    emProgresso: 0,
+    aFazer: 0,
   });
+  const [projetoStats, setProjetoStats] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // KPI Cálculos
-  const totalTasksGlobal = stats.reduce((acc, curr) => acc + curr.total, 0);
-  const totalProgressoGlobal = stats.reduce((acc, curr) => acc + curr.progressoPonderado, 0);
-  const taxaEntrega = totalTasksGlobal === 0 ? 0 : Math.round((totalProgressoGlobal / totalTasksGlobal) * 100);
+  const fetchDashboardData = useCallback(async () => {
+    if (!token || projects.length === 0) return;
+    setLoading(true);
 
-  // NOVA LÓGICA: Projetos com 100% de progresso
-  const projetosFinalizadosCount = stats.filter(s => s.pct === 100 && s.total > 0).length;
+    try {
+      let totalGlobal = 0, concluidoGlobal = 0, emProgressoGlobal = 0, aFazerGlobal = 0;
+      const statsProj = [];
 
-  const statusCounts = { "Concluído": 0, "Em progresso": 0, "A fazer": 0 };
-  Object.values(boardsData).forEach(proj => {
-    Object.values(proj).forEach(sprint => {
-      statusCounts["Concluído"] += sprint["concluido"]?.tarefas.length || 0;
-      statusCounts["Em progresso"] += sprint["em-progresso"]?.tarefas.length || 0;
-      statusCounts["A fazer"] += sprint["a-fazer"]?.tarefas.length || 0;
-    });
-  });
+      for (const proj of projects) {
+        let concluido = 0, emProgresso = 0, aFazer = 0;
 
-  const statusDataReal = [
-    { label: "Concluído", val: statusCounts["Concluído"], cor: "#1D9E75" },
-    { label: "Em progresso", val: statusCounts["Em progresso"], cor: "#378ADD" },
-    { label: "A fazer", val: statusCounts["A fazer"], cor: "#B4B2A9" },
+        // Busca tarefas de todas as sprints do projeto
+        for (const sprint of ['1', '2', '3', '4']) {
+          const res = await fetch(
+            `${API_URL}/tarefas?projeto_id=${proj.id}&sprint=${sprint}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (!res.ok) continue;
+          const tarefas = await res.json();
+          tarefas.forEach(t => {
+            if (t.status === 'concluido') concluido++;
+            else if (t.status === 'em-progresso') emProgresso++;
+            else aFazer++;
+          });
+        }
+
+        const total = concluido + emProgresso + aFazer;
+        const progressoPonderado = total === 0 ? 0 : concluido + (emProgresso * 0.25);
+        const pct = total === 0 ? 0 : Math.round((progressoPonderado / total) * 100);
+
+        statsProj.push({ id: proj.id, nome: proj.name, cor: proj.color || '#378ADD', pct, total });
+
+        totalGlobal += total;
+        concluidoGlobal += concluido;
+        emProgressoGlobal += emProgresso;
+        aFazerGlobal += aFazer;
+      }
+
+      setTarefasStats({ total: totalGlobal, concluido: concluidoGlobal, emProgresso: emProgressoGlobal, aFazer: aFazerGlobal });
+      setProjetoStats(statsProj);
+    } catch (err) {
+      console.error('Erro ao buscar dados do dashboard:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, projects]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  const taxaEntrega = tarefasStats.total === 0 ? 0 :
+    Math.round(((tarefasStats.concluido + tarefasStats.emProgresso * 0.25) / tarefasStats.total) * 100);
+
+  const statusData = [
+    { label: "Concluído", val: tarefasStats.concluido, cor: "#1D9E75" },
+    { label: "Em progresso", val: tarefasStats.emProgresso, cor: "#378ADD" },
+    { label: "A fazer", val: tarefasStats.aFazer, cor: "#B4B2A9" },
   ];
 
   return (
@@ -169,50 +184,20 @@ export default function Dashboard() {
       </header>
 
       <section className={styles.statsGrid}>
-        {/* 1. PROJETOS */}
-        <KpiCard
-          label="PROJETOS"
-          target={projects.length}
-          delta="Ativos"
-          tipo="up"
-          icon={Briefcase}
-        />
-
-        {/* 2. TAREFAS */}
-        <KpiCard
-          label="TAREFAS"
-          target={totalTasksGlobal}
-          delta="Total"
-          tipo="up"
-          icon={ListChecks}
-        />
-
-        {/* 3. ENTREGAS (Renomeado e com badge "Finalizadas") */}
-        <KpiCard
-          label="ENTREGAS"
-          target={Math.floor(totalProgressoGlobal)}
-          delta="Finalizadas"
-          tipo="up"
-          icon={Target}
-        />
-
-        {/* 4. EFICIÊNCIA */}
-        <KpiCard
-          label="EFICIÊNCIA"
-          target={taxaEntrega}
-          sufixo="%"
-          delta="Geral"
-          tipo="up"
-          icon={TrendingUp}
-        />
+        <KpiCard label="PROJETOS" target={projects.length} delta="Ativos" tipo="up" icon={Briefcase} />
+        <KpiCard label="TAREFAS" target={tarefasStats.total} delta="Total" tipo="up" icon={ListChecks} />
+        <KpiCard label="ENTREGAS" target={tarefasStats.concluido} delta="Finalizadas" tipo="up" icon={Target} />
+        <KpiCard label="EFICIÊNCIA" target={taxaEntrega} sufixo="%" delta="Geral" tipo="up" icon={TrendingUp} />
       </section>
 
       <div className={styles.chartsGrid}>
         <section className={styles.card}>
           <h3 className={styles.cardTitle}>Progresso dos Projetos</h3>
           <div className={styles.progressSection}>
-            {stats.length > 0 ? (
-              stats.map((p) => <BarraProgresso key={p.id} {...p} nome={p.nome} />)
+            {loading ? (
+              <p className={styles.emptyText}>Carregando dados...</p>
+            ) : projetoStats.length > 0 ? (
+              projetoStats.map(p => <BarraProgresso key={p.id} nome={p.nome} pct={p.pct} cor={p.cor} />)
             ) : (
               <p className={styles.emptyText}>Sem dados para exibir.</p>
             )}
@@ -221,7 +206,7 @@ export default function Dashboard() {
 
         <section className={styles.card}>
           <h3 className={styles.cardTitle}>Distribuição de Status</h3>
-          <DonutChart data={statusDataReal} />
+          <DonutChart data={statusData} />
         </section>
       </div>
     </div>

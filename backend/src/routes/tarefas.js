@@ -6,31 +6,30 @@ const { autenticar } = require("../middlewares/auth");
 // GET /tarefas?projeto_id=X&sprint=Y
 router.get("/", autenticar, async (req, res) => {
   const { projeto_id, sprint } = req.query;
-
   if (!projeto_id) return res.status(400).json({ erro: "projeto_id é obrigatório." });
 
   try {
     const params = [projeto_id];
     let query = "SELECT * FROM tarefas WHERE projeto_id = ?";
-
-    if (sprint) {
-      query += " AND sprint = ?";
-      params.push(sprint);
-    }
-
+    if (sprint) { query += " AND sprint = ?"; params.push(sprint); }
     query += " ORDER BY criado_em ASC";
+
     const [tarefas] = await db.query(query, params);
 
-    // Para cada tarefa, busca os responsáveis
     for (const tarefa of tarefas) {
       const [responsaveis] = await db.query(
-        `SELECT u.id, u.nome, u.email
-         FROM usuarios u
+        `SELECT u.id, u.nome, u.email FROM usuarios u
          INNER JOIN tarefa_responsaveis tr ON u.id = tr.usuario_id
          WHERE tr.tarefa_id = ?`,
         [tarefa.id]
       );
       tarefa.responsaveis = responsaveis;
+      tarefa.subtarefas = tarefa.subtarefas
+        ? (typeof tarefa.subtarefas === 'string' ? JSON.parse(tarefa.subtarefas) : tarefa.subtarefas)
+        : [];
+      tarefa.comentarios = tarefa.comentarios
+        ? (typeof tarefa.comentarios === 'string' ? JSON.parse(tarefa.comentarios) : tarefa.comentarios)
+        : [];
     }
 
     res.json(tarefas);
@@ -40,9 +39,9 @@ router.get("/", autenticar, async (req, res) => {
   }
 });
 
-// POST /tarefas — Cria nova tarefa
+// POST /tarefas
 router.post("/", autenticar, async (req, res) => {
-  const { titulo, notas, prioridade, status, data_limite, sprint, projeto_id, responsaveis } = req.body;
+  const { titulo, notas, prioridade, status, data_limite, sprint, projeto_id, responsaveis, subtarefas, comentarios } = req.body;
 
   if (!titulo || !projeto_id) {
     return res.status(400).json({ erro: "Título e projeto_id são obrigatórios." });
@@ -50,23 +49,25 @@ router.post("/", autenticar, async (req, res) => {
 
   try {
     const [result] = await db.query(
-      `INSERT INTO tarefas (titulo, notas, prioridade, status, data_limite, sprint, projeto_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO tarefas (titulo, notas, prioridade, status, data_limite, sprint, projeto_id, subtarefas, comentarios)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         titulo,
         notas || "",
         prioridade || "media",
         status || "a-fazer",
-        data_limite || null,
+        data_limite ? data_limite.split('T')[0] : null,
         sprint || "1",
         projeto_id,
+        JSON.stringify(subtarefas || []),
+        JSON.stringify(comentarios || []),
       ]
     );
 
     const tarefaId = result.insertId;
 
     if (Array.isArray(responsaveis) && responsaveis.length > 0) {
-      const vals = responsaveis.map((uid) => [tarefaId, uid]);
+      const vals = responsaveis.map(uid => [tarefaId, uid]);
       await db.query("INSERT INTO tarefa_responsaveis (tarefa_id, usuario_id) VALUES ?", [vals]);
     }
 
@@ -77,10 +78,10 @@ router.post("/", autenticar, async (req, res) => {
   }
 });
 
-// PUT /tarefas/:id — Atualiza tarefa
+// PUT /tarefas/:id
 router.put("/:id", autenticar, async (req, res) => {
   const { id } = req.params;
-  const { titulo, notas, prioridade, status, data_limite, sprint, responsaveis } = req.body;
+  const { titulo, notas, prioridade, status, data_limite, sprint, responsaveis, subtarefas, comentarios } = req.body;
 
   try {
     const [existe] = await db.query("SELECT id FROM tarefas WHERE id = ?", [id]);
@@ -93,8 +94,14 @@ router.put("/:id", autenticar, async (req, res) => {
     if (notas !== undefined) { campos.push("notas = ?"); valores.push(notas); }
     if (prioridade) { campos.push("prioridade = ?"); valores.push(prioridade); }
     if (status) { campos.push("status = ?"); valores.push(status); }
-    if (data_limite !== undefined) { campos.push("data_limite = ?"); valores.push(data_limite || null); }
+    if (data_limite !== undefined) {
+      const dataFormatada = data_limite ? data_limite.split('T')[0] : null;
+      campos.push("data_limite = ?");
+      valores.push(dataFormatada);
+    }
     if (sprint) { campos.push("sprint = ?"); valores.push(sprint); }
+    if (subtarefas !== undefined) { campos.push("subtarefas = ?"); valores.push(JSON.stringify(subtarefas)); }
+    if (comentarios !== undefined) { campos.push("comentarios = ?"); valores.push(JSON.stringify(comentarios)); }
 
     if (campos.length > 0) {
       valores.push(id);
@@ -104,7 +111,7 @@ router.put("/:id", autenticar, async (req, res) => {
     if (Array.isArray(responsaveis)) {
       await db.query("DELETE FROM tarefa_responsaveis WHERE tarefa_id = ?", [id]);
       if (responsaveis.length > 0) {
-        const vals = responsaveis.map((uid) => [id, uid]);
+        const vals = responsaveis.map(uid => [id, uid]);
         await db.query("INSERT INTO tarefa_responsaveis (tarefa_id, usuario_id) VALUES ?", [vals]);
       }
     }
@@ -116,7 +123,7 @@ router.put("/:id", autenticar, async (req, res) => {
   }
 });
 
-// DELETE /tarefas/:id — Remove tarefa
+// DELETE /tarefas/:id
 router.delete("/:id", autenticar, async (req, res) => {
   const { id } = req.params;
   try {
