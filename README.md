@@ -194,4 +194,4 @@ AgilePro/
 ## 👨‍💻 Desenvolvedor
 
 **Giovanni Alvarenga Moretto**
-*Estudante de Análise e Desenvolvimento de Sistemas — Fatec Guaratinguetá*
+*Estudante de Análise e Desenvolvimento de Sistemas — Fatec São José dos Campos*
