@@ -24,10 +24,13 @@ export default function Layout() {
     return true
   })
 
-  // Busca o avatar atualizado do usuário logado na lista allUsers
+  // Busca os dados atualizados do usuário logado na lista allUsers (Avatar e Cargo)
   const usuarioAtual = allUsers.find(u => String(u.id) === String(userLogged?.id))
   const avatarUrl = usuarioAtual?.avatar ? `${API_URL}${usuarioAtual.avatar}` : null
   const iniciais = userLogged?.nome?.substring(0, 2).toUpperCase() || '??'
+
+  // Define o cargo para exibição buscando primeiro a versão mais atualizada do banco
+  const cargoExibicao = usuarioAtual?.cargo_display || userLogged?.cargo_display || (isAdmin ? 'Administrador' : 'Membro')
 
   return (
     <div className={styles.shell}>
@@ -70,7 +73,8 @@ export default function Layout() {
 
           <div className={styles.userInfo}>
             <span className={styles.userName}>{userLogged?.nome || 'Usuário'}</span>
-            <span className={styles.userRole}>{userLogged?.role || 'Membro'}</span>
+            {/* Atualizado para exibir o cargo correto */}
+            <span className={styles.userRole}>{cargoExibicao}</span>
           </div>
 
           <button

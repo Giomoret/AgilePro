@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Mail, Edit2, Trash2, Loader, Camera } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import Modal from '../components/Modal';
@@ -21,23 +21,61 @@ function labelCargo(cargo) {
 }
 
 export default function Perfis() {
-  const { isAdmin, allUsers, updateUser, deleteUser, fetchUsers, token } = useApp();
+  const { isAdmin, userLogged, allUsers, updateUser, deleteUser, fetchUsers, token } = useApp();
 
   const [open, setOpen] = useState(false);
+  const [openCreate, setOpenCreate] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [form, setForm] = useState({ nome: '', cargo: 'membro', email: '' });
+  const [createForm, setCreateForm] = useState({ nome: '', email: '', senha: '', cargo: 'membro' });
   const [loading, setLoading] = useState(false);
   const [loadingAvatar, setLoadingAvatar] = useState(false);
   const [erro, setErro] = useState('');
   const fileInputRef = useRef(null);
 
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const hasAdminPrivilege = isAdmin || userLogged?.cargo === 'admin';
+
+  // Verifica se quem está logado é Administrador de fato
+  const isSuperAdmin = userLogged?.cargo_display === 'Administrador' ||
+    (userLogged?.cargo === 'admin' && userLogged?.cargo_display !== 'Scrum Master' && userLogged?.cargo_display !== 'Product Owner');
+
+  // Verifica se o usuário que está sendo EDITADO é Administrador
+  const isEditingSuperAdmin = editingUser?.cargo_display === 'Administrador' ||
+    (editingUser?.cargo === 'admin' && editingUser?.cargo_display !== 'Scrum Master' && editingUser?.cargo_display !== 'Product Owner');
+
+  // Se eu não sou Admin, e estou editando um Admin, não posso alterar o cargo nem excluir ele
+  const disableRoleChange = !isSuperAdmin && isEditingSuperAdmin;
+
+  const allowedRoles = [
+    { value: 'membro', label: 'Dev / Membro' },
+    { value: 'Scrum Master', label: 'Scrum Master' },
+    { value: 'Product Owner', label: 'Product Owner' }
+  ];
+
+  if (isSuperAdmin) {
+    allowedRoles.push({ value: 'admin', label: 'Administrador' });
+  } else {
+    allowedRoles.push({ value: 'admin', label: 'Administrador (Acesso Restrito)', disabled: true });
+  }
+
+  function getInitialCargo(u) {
+    if (u.cargo_display === 'Administrador' || (u.cargo === 'admin' && !u.cargo_display)) return 'admin';
+    if (u.cargo_display === 'Scrum Master') return 'Scrum Master';
+    if (u.cargo_display === 'Product Owner') return 'Product Owner';
+    return u.cargo === 'admin' ? 'admin' : (u.cargo_display || u.cargo || 'membro');
+  }
+
   function handleEditClick(user) {
-    if (!isAdmin) return;
+    if (!hasAdminPrivilege) return;
     setEditingUser(user);
     setErro('');
     setForm({
       nome: user.nome,
-      cargo: user.cargo_display || user.cargo || 'membro', // usa cargo_display
+      cargo: getInitialCargo(user),
       email: user.email || '',
     });
     setOpen(true);
@@ -72,18 +110,64 @@ export default function Perfis() {
     }
   }
 
-  async function handleSubmit(e) {
+  async function handleCreateSubmit(e) {
     e.preventDefault();
-    if (!isAdmin || !editingUser) return;
+    if (!hasAdminPrivilege) return;
     setLoading(true);
     setErro('');
+
+    const roleSelecionada = allowedRoles.find(r => r.value === createForm.cargo);
+    const payload = {
+      ...createForm,
+      cargo_display: roleSelecionada ? roleSelecionada.label : 'Dev / Membro'
+    };
+
+    try {
+      const res = await fetch(`${API_URL}/usuarios`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.erro || 'Erro ao criar usuário.');
+      }
+
+      await fetchUsers();
+      setOpenCreate(false);
+      setCreateForm({ nome: '', email: '', senha: '', cargo: 'membro' });
+    } catch (err) {
+      setErro(err.message || 'Erro ao cadastrar usuário.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!hasAdminPrivilege || !editingUser) return;
+
+    // Bloqueio de segurança no envio
+    if (disableRoleChange && form.cargo !== getInitialCargo(editingUser)) {
+      setErro('Você não tem permissão para alterar o cargo de um Administrador.');
+      return;
+    }
+
+    setLoading(true);
+    setErro('');
+
+    const roleSelecionada = allowedRoles.find(r => r.value === form.cargo);
 
     try {
       await updateUser(editingUser.id, {
         nome: form.nome,
         email: form.email,
-        cargo: form.cargo, // envia o cargo original (ex: 'Scrum Master')
-        // o backend que faz a conversão para admin/membro
+        cargo: form.cargo,
+        cargo_display: roleSelecionada ? roleSelecionada.label : form.cargo
       });
       setOpen(false);
     } catch (err) {
@@ -94,7 +178,12 @@ export default function Perfis() {
   }
 
   async function handleDeleteUser() {
-    if (!isAdmin || !editingUser) return;
+    if (!hasAdminPrivilege || !editingUser) return;
+    if (disableRoleChange) {
+      setErro('Você não tem permissão para excluir um Administrador.');
+      return;
+    }
+
     const confirmar = window.confirm(`Tem certeza que deseja remover ${editingUser.nome} da equipe?`);
     if (!confirmar) return;
 
@@ -111,17 +200,32 @@ export default function Perfis() {
 
   return (
     <div style={{ padding: '2rem' }}>
-      <header style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1a1a18', margin: 0 }}>
-          Perfis da Equipe
-        </h1>
-        <p style={{ color: '#888780', marginTop: '5px' }}>
-          {isAdmin ? 'Gerencie os membros e permissões do workspace.' : 'Visualize os membros ativos da equipe.'}
-        </p>
+      <header style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1a1a18', margin: 0 }}>
+            Perfis da Equipe
+          </h1>
+          <p style={{ color: '#888780', marginTop: '5px' }}>
+            {hasAdminPrivilege ? 'Gerencie os membros e permissões do workspace.' : 'Visualize os membros ativos da equipe.'}
+          </p>
+        </div>
+
+        {hasAdminPrivilege && (
+          <button
+            onClick={() => { setErro(''); setOpenCreate(true); }}
+            style={{
+              background: '#1a1a18', color: 'white', border: 'none',
+              padding: '10px 20px', borderRadius: '8px', cursor: 'pointer',
+              fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px'
+            }}
+          >
+            + Novo Membro
+          </button>
+        )}
       </header>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-        {allUsers.map((u, index) => {
+        {(allUsers || []).map((u, index) => {
           const cor = coresDisponiveis[index % coresDisponiveis.length];
           const iniciais = u.nome?.substring(0, 2).toUpperCase() || '??';
           const avatarUrl = u.avatar ? `${API_URL}${u.avatar}` : null;
@@ -133,11 +237,11 @@ export default function Perfis() {
               style={{
                 background: 'white', borderRadius: '16px', padding: '1.5rem',
                 border: '1px solid #f0f0ee', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                textAlign: 'center', cursor: isAdmin ? 'pointer' : 'default',
+                textAlign: 'center', cursor: hasAdminPrivilege ? 'pointer' : 'default',
                 position: 'relative', transition: 'transform 0.2s',
               }}
             >
-              {isAdmin && (
+              {hasAdminPrivilege && (
                 <div style={{ position: 'absolute', top: '15px', right: '15px', color: '#b4b2a9' }}>
                   <Edit2 size={14} />
                 </div>
@@ -172,9 +276,86 @@ export default function Perfis() {
         })}
       </div>
 
+      {/* MODAL DE CRIAÇÃO */}
+      <Modal open={openCreate} onClose={() => setOpenCreate(false)} title="Novo Membro">
+        <form onSubmit={handleCreateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          {erro && (
+            <div style={{ background: '#fee2e2', color: '#dc2626', padding: '10px', borderRadius: '8px', fontSize: '13px' }}>
+              {erro}
+            </div>
+          )}
+
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '5px' }}>Nome Completo</label>
+            <input
+              style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '8px', boxSizing: 'border-box' }}
+              value={createForm.nome}
+              onChange={e => setCreateForm({ ...createForm, nome: e.target.value })}
+              required
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '5px' }}>E-mail</label>
+            <input
+              type="email"
+              style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '8px', boxSizing: 'border-box' }}
+              value={createForm.email}
+              onChange={e => setCreateForm({ ...createForm, email: e.target.value })}
+              required
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '5px' }}>Senha</label>
+            <input
+              type="password"
+              style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '8px', boxSizing: 'border-box' }}
+              value={createForm.senha}
+              onChange={e => setCreateForm({ ...createForm, senha: e.target.value })}
+              required
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '5px' }}>Cargo / Função</label>
+            <select
+              style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '8px', background: 'white', boxSizing: 'border-box' }}
+              value={createForm.cargo}
+              onChange={e => setCreateForm({ ...createForm, cargo: e.target.value })}
+            >
+              {allowedRoles.map((role) => (
+                <option key={`create-${role.value}`} value={role.value} disabled={role.disabled}>
+                  {role.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '15px' }}>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button type="button" onClick={() => setOpenCreate(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                Cancelar
+              </button>
+              <button
+                type="submit" disabled={loading}
+                style={{
+                  background: loading ? '#555' : '#1a1a18', color: 'white',
+                  border: 'none', padding: '10px 20px', borderRadius: '8px',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                }}
+              >
+                {loading ? <><Loader size={14} /> Cadastrando...</> : 'Cadastrar'}
+              </button>
+            </div>
+          </div>
+        </form>
+      </Modal>
+
+      {/* MODAL DE EDIÇÃO */}
       <Modal open={open} onClose={() => setOpen(false)} title="Gerenciar Usuário">
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-
           {erro && (
             <div style={{ background: '#fee2e2', color: '#dc2626', padding: '10px', borderRadius: '8px', fontSize: '13px' }}>
               {erro}
@@ -196,7 +377,8 @@ export default function Perfis() {
                 }
               </div>
 
-              {isAdmin && (
+              {/* Se o SM tentar editar a foto do Admin, podemos deixar ou bloquear também. Aqui deixamos livre, focando na restrição do cargo */}
+              {hasAdminPrivilege && (
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
@@ -221,12 +403,6 @@ export default function Perfis() {
               style={{ display: 'none' }}
               onChange={handleAvatarChange}
             />
-
-            {isAdmin && (
-              <span style={{ fontSize: '11px', color: '#888780' }}>
-                Clique na câmera para alterar a foto
-              </span>
-            )}
           </div>
 
           <div>
@@ -240,16 +416,24 @@ export default function Perfis() {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '5px' }}>Cargo / Função</label>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '5px' }}>
+              Cargo / Função {disableRoleChange && <span style={{ color: '#dc2626', fontSize: '11px' }}>(Acesso Restrito)</span>}
+            </label>
             <select
-              style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '8px', background: 'white', boxSizing: 'border-box' }}
+              style={{
+                width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '8px',
+                background: disableRoleChange ? '#f0f0ee' : 'white', boxSizing: 'border-box',
+                cursor: disableRoleChange ? 'not-allowed' : 'pointer'
+              }}
               value={form.cargo}
               onChange={e => setForm({ ...form, cargo: e.target.value })}
+              disabled={disableRoleChange}
             >
-              <option value="membro">Dev / Membro</option>
-              <option value="Scrum Master">Scrum Master</option>
-              <option value="Product Owner">Product Owner</option>
-              <option value="admin">Administrador</option>
+              {allowedRoles.map((role) => (
+                <option key={`edit-${role.value}`} value={role.value} disabled={role.disabled}>
+                  {role.label}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -265,12 +449,17 @@ export default function Perfis() {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '15px' }}>
-            <button
-              type="button" onClick={handleDeleteUser} disabled={loading}
-              style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '10px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: '600' }}
-            >
-              <Trash2 size={16} /> Excluir
-            </button>
+            {/* Oculta o botão de excluir se estiver editando um Admin e não for Admin */}
+            {!disableRoleChange ? (
+              <button
+                type="button" onClick={handleDeleteUser} disabled={loading}
+                style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '10px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: '600' }}
+              >
+                <Trash2 size={16} /> Excluir
+              </button>
+            ) : (
+              <div></div> /* Div vazia para manter o alinhamento flex-between */
+            )}
 
             <div style={{ display: 'flex', gap: '10px' }}>
               <button type="button" onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
